@@ -1,0 +1,22 @@
+title: Encoded PowerShell Execution
+id: aris_r_0003
+status: stable
+description: Detects PowerShell invocation with encoded commands, a common technique for obfuscation and defense evasion.
+level: high
+tags:
+  - attack.execution
+  - attack.t1059.001
+detection:
+  selection_enc:
+    command_line|contains|all:
+      - powershell
+      - "-enc"
+  selection_encoded:
+    command_line|contains|all:
+      - powershell
+      - "-EncodedCommand"
+  selection_hidden:
+    command_line|contains|all:
+      - powershell
+      - "-w hidden"
+  condition: selection_enc or selection_encoded or selection_hidden

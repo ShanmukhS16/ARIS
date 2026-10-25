@@ -1,0 +1,14 @@
+title: Registry Run Key Persistence
+id: aris_r_0002
+status: stable
+description: Detects writes to registry Run keys used for persistence. Attackers add entries here so their payloads execute on user login.
+level: high
+tags:
+  - attack.persistence
+  - attack.t1547.001
+detection:
+  selection:
+    target_object|contains:
+      - "\\CurrentVersion\\Run"
+      - "\\CurrentVersion\\RunOnce"
+  condition: selection

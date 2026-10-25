@@ -1,0 +1,12 @@
+title: SSH Brute Force Attempt
+id: aris_r_0004
+status: stable
+description: Detects failed SSH password authentication attempts. Multiple hits from the same source suggest brute force activity.
+level: medium
+tags:
+  - attack.credential_access
+  - attack.t1110.001
+detection:
+  selection:
+    process|contains: "Failed password"
+  condition: selection

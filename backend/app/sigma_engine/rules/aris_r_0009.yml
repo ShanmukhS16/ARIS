@@ -1,0 +1,24 @@
+title: Ingress Tool Transfer via Download or Known Tool Drop
+id: aris_r_0009
+status: stable
+description: Detects PowerShell DownloadString/DownloadFile and IEX patterns used to pull tools from remote hosts, as well as creation of common attacker utilities in temp directories.
+level: high
+tags:
+  - attack.command_and_control
+  - attack.t1105
+detection:
+  selection_downloadstring:
+    command_line|contains: DownloadString
+  selection_downloadfile:
+    command_line|contains: DownloadFile
+  selection_iex:
+    command_line|contains|all:
+      - IEX
+      - Net.WebClient
+  selection_tool_drop:
+    file_path|contains:
+      - "\\Temp\\nc.exe"
+      - "\\Temp\\psexec"
+      - "\\Temp\\mimikatz"
+      - "\\Temp\\rubeus"
+  condition: selection_downloadstring or selection_downloadfile or selection_iex or selection_tool_drop

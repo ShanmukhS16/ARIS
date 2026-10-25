@@ -1,0 +1,14 @@
+title: RDP Lateral Movement Indicator
+id: aris_r_0007
+status: stable
+description: Detects network connections to TCP port 3389 (RDP) from internal hosts. While RDP is legitimate, connections between workstations (as opposed to from admin jump boxes) may indicate lateral movement.
+level: medium
+tags:
+  - attack.lateral_movement
+  - attack.t1021.001
+detection:
+  selection_port:
+    destination_port|contains: "3389"
+  selection_dest_port:
+    dest_port|contains: "3389"
+  condition: selection_port or selection_dest_port

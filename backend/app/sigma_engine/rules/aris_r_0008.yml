@@ -1,0 +1,20 @@
+title: LSASS Memory Credential Dumping
+id: aris_r_0008
+status: stable
+description: Detects credential dumping from LSASS process memory using rundll32 with comsvcs.dll MiniDump, procdump, or direct LSASS access. This is a high-confidence indicator of credential theft.
+level: critical
+tags:
+  - attack.credential_access
+  - attack.t1003.001
+detection:
+  selection_comsvcs:
+    command_line|contains|all:
+      - comsvcs
+      - MiniDump
+  selection_procdump:
+    command_line|contains|all:
+      - procdump
+      - lsass
+  selection_lsass_access:
+    command_line|contains: lsass.dmp
+  condition: selection_comsvcs or selection_procdump or selection_lsass_access

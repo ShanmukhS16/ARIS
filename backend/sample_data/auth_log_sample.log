@@ -1,0 +1,9 @@
+Mar 15 10:00:05 srv-01 sshd[12001]: Failed password for root from 10.0.0.50 port 44123 ssh2
+Mar 15 10:00:08 srv-01 sshd[12002]: Failed password for root from 10.0.0.50 port 44124 ssh2
+Mar 15 10:00:11 srv-01 sshd[12003]: Failed password for root from 10.0.0.50 port 44125 ssh2
+Mar 15 10:05:22 srv-01 sshd[12010]: Accepted publickey for alice from 10.0.0.10 port 55001 ssh2
+Mar 15 10:10:33 srv-01 apt[12100]: apt update completed successfully
+Mar 15 10:15:44 srv-01 sudo[12200]: alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/cat /etc/shadow
+Mar 15 10:20:55 srv-01 sshd[12301]: Failed password for admin from 10.0.0.60 port 44200 ssh2
+Mar 15 10:21:02 srv-01 sshd[12302]: Failed password for admin from 10.0.0.60 port 44201 ssh2
+Mar 15 10:21:09 srv-01 sshd[12303]: Failed password for admin from 10.0.0.60 port 44202 ssh2

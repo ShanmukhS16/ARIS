@@ -1,0 +1,12 @@
+title: Shadow File Access
+id: aris_r_0005
+status: stable
+description: Detects access to /etc/shadow, the password hash store. Legitimate access is rare outside account management tools.
+level: critical
+tags:
+  - attack.credential_access
+  - attack.t1003.008
+detection:
+  selection:
+    process|contains: "/etc/shadow"
+  condition: selection

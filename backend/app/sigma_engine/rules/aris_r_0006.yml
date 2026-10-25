@@ -1,0 +1,12 @@
+title: System Information Discovery via systeminfo
+id: aris_r_0006
+status: stable
+description: Detects execution of systeminfo for host reconnaissance. Attackers use this to fingerprint the OS, patch level, and hardware before selecting exploits.
+level: medium
+tags:
+  - attack.discovery
+  - attack.t1082
+detection:
+  selection:
+    command_line|contains: systeminfo
+  condition: selection

@@ -1,0 +1,18 @@
+title: Obfuscated Execution via mshta or Base64 Decoding
+id: aris_r_0010
+status: stable
+description: Detects execution chains using mshta.exe as a PowerShell parent (a known LOLBin technique) and explicit Base64 decoding in command lines, both indicators of payload obfuscation.
+level: high
+tags:
+  - attack.defense_evasion
+  - attack.t1027
+detection:
+  selection_mshta_parent:
+    parent_image|contains: mshta.exe
+  selection_base64_decode:
+    command_line|contains: FromBase64String
+  selection_certutil_decode:
+    command_line|contains|all:
+      - certutil
+      - "-decode"
+  condition: selection_mshta_parent or selection_base64_decode or selection_certutil_decode

@@ -1,0 +1,10 @@
+# Ignore the dataset folder inside backend
+backend/dataset/
+
+# Ignore the SQLite database file
+backend/aris.db
+
+# Ignore python virtual environments if you have them
+.venv/
+__pycache__/
+*.pyc

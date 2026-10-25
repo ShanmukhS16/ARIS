@@ -1,0 +1,12 @@
+title: System Owner/User Discovery via whoami
+id: aris_r_0001
+status: stable
+description: Detects execution of whoami for local user discovery. Common in early reconnaissance after initial access.
+level: medium
+tags:
+  - attack.discovery
+  - attack.t1033
+detection:
+  selection:
+    command_line|contains: whoami
+  condition: selection
