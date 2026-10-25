@@ -1,5 +1,6 @@
 # Ignore the dataset folder inside backend
 backend/dataset/
+node_modules/
 
 # Ignore the SQLite database file
 backend/aris.db

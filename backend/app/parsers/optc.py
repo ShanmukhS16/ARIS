@@ -89,16 +89,6 @@ def parse_optc_gzip_strided(path: str, stride: int, offset: int = 0) -> Iterator
             ev = _map_ecar_event(raw, line)
             if ev is not None:
                 yield ev
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                raw = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            ev = _map_ecar_event(raw, line)
-            if ev is not None:
-                yield ev
 
 
 def _map_ecar_event(raw: dict, raw_line: str) -> Event | None:

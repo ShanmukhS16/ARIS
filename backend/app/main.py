@@ -161,36 +161,46 @@ async def list_events(
         else:
             stmt = stmt.where(Event.detection_level == detection_level)
 
+    # Count total matching rows before pagination
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    async with async_session() as session:
+        total = await session.scalar(count_stmt)
+
     stmt = stmt.offset(offset).limit(limit)
 
     async with async_session() as session:
         result = await session.execute(stmt)
         events = result.scalars().all()
 
-    return [
-        {
-            "id": ev.id,
-            "ingestion_id": ev.ingestion_id,
-            "timestamp": ev.timestamp.isoformat(),
-            "host": ev.host,
-            "source_type": ev.source_type,
-            "user": ev.user,
-            "process": ev.process,
-            "anomaly_score": ev.anomaly_score,
-            "detection_level": ev.detection_level,
-            "detections": [
-                {
-                    "rule_id": d.rule_id,
-                    "rule_title": d.rule_title,
-                    "severity": d.severity,
-                    "mitre_attack_id": d.mitre_attack_id,
-                    "mitre_tactic": d.mitre_tactic,
-                }
-                for d in ev.detections
-            ],
-        }
-        for ev in events
-    ]
+    return {
+        "items": [
+            {
+                "id": ev.id,
+                "ingestion_id": ev.ingestion_id,
+                "timestamp": ev.timestamp.isoformat(),
+                "host": ev.host,
+                "source_type": ev.source_type,
+                "user": ev.user,
+                "process": ev.process,
+                "anomaly_score": ev.anomaly_score,
+                "detection_level": ev.detection_level,
+                "detections": [
+                    {
+                        "rule_id": d.rule_id,
+                        "rule_title": d.rule_title,
+                        "severity": d.severity,
+                        "mitre_attack_id": d.mitre_attack_id,
+                        "mitre_tactic": d.mitre_tactic,
+                    }
+                    for d in ev.detections
+                ],
+            }
+            for ev in events
+        ],
+        "total": total or 0,
+        "limit": limit,
+        "offset": offset,
+    }
 
 
 # ---- Detections ----
@@ -212,27 +222,36 @@ async def list_detections(
         stmt = stmt.where(Event.ingestion_id == ingestion_id)
     if severity:
         stmt = stmt.where(Detection.severity == severity)
+
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    async with async_session() as session:
+        total = await session.scalar(count_stmt)
+
     stmt = stmt.limit(limit)
 
     async with async_session() as session:
         result = await session.execute(stmt)
         detections = result.scalars().all()
 
-    return [
-        {
-            "id": d.id,
-            "event_id": d.event_id,
-            "rule_id": d.rule_id,
-            "rule_title": d.rule_title,
-            "severity": d.severity,
-            "mitre_attack_id": d.mitre_attack_id,
-            "mitre_tactic": d.mitre_tactic,
-            "event_timestamp": d.event.timestamp.isoformat() if d.event else None,
-            "event_host": d.event.host if d.event else None,
-            "event_process": d.event.process if d.event else None,
-        }
-        for d in detections
-    ]
+    return {
+        "items": [
+            {
+                "id": d.id,
+                "event_id": d.event_id,
+                "rule_id": d.rule_id,
+                "rule_title": d.rule_title,
+                "severity": d.severity,
+                "mitre_attack_id": d.mitre_attack_id,
+                "mitre_tactic": d.mitre_tactic,
+                "event_timestamp": d.event.timestamp.isoformat() if d.event else None,
+                "event_host": d.event.host if d.event else None,
+                "event_process": d.event.process if d.event else None,
+            }
+            for d in detections
+        ],
+        "total": total or 0,
+        "limit": limit,
+    }
 
 
 # ---- Stats ----

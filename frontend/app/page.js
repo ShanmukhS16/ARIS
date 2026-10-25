@@ -21,10 +21,11 @@ export default function Dashboard() {
   const [filter, setFilter] = useState("all");
   const [training, setTraining] = useState(false);
 
-  const loadData = useCallback(async (iid) => {
+  const loadData = useCallback(async (iid, filterOverride) => {
+    const activeFilter = filterOverride ?? filter;
     try {
       const [evts, st] = await Promise.all([
-        fetchEvents({ ingestion_id: iid, detection_level: filter !== "all" ? filter : undefined }),
+        fetchEvents({ ingestion_id: iid, detection_level: activeFilter !== "all" ? activeFilter : undefined }),
         fetchStats(iid),
       ]);
       setEvents(evts);
@@ -59,7 +60,7 @@ export default function Dashboard() {
 
   function handleFilterChange(newFilter) {
     setFilter(newFilter);
-    loadData(ingestionId);
+    loadData(ingestionId, newFilter);
   }
 
   return (

@@ -128,8 +128,6 @@ def _estimate_total_lines(gz_files, jsonl_files):
 
     return total
 
-    return events
-
 
 def evaluate(events, threshold):
     print(f"\n{gt_summary()}\n")

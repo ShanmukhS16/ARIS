@@ -27,7 +27,8 @@ export async function fetchEvents(params = {}) {
   if (params.limit) qs.set("limit", String(params.limit));
   if (params.offset) qs.set("offset", String(params.offset));
   const res = await fetch(`${API_BASE}/api/events?${qs}`);
-  return res.json();
+  const data = await res.json();
+  return data.items ?? data;
 }
 
 export async function fetchDetections(params = {}) {
@@ -35,7 +36,8 @@ export async function fetchDetections(params = {}) {
   if (params.ingestion_id) qs.set("ingestion_id", params.ingestion_id);
   if (params.severity) qs.set("severity", params.severity);
   const res = await fetch(`${API_BASE}/api/detections?${qs}`);
-  return res.json();
+  const data = await res.json();
+  return data.items ?? data;
 }
 
 export async function fetchStats(ingestionId) {
