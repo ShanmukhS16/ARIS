@@ -54,6 +54,33 @@ export async function generateNarrative(ingestionId) {
   return res.json();
 }
 
+// ---- Dashboard endpoints ----
+
+function toQuery(params = {}) {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== null && v !== "") qs.set(k, String(v));
+  }
+  const s = qs.toString();
+  return s ? `?${s}` : "";
+}
+
+function scopeParams(scope = {}) {
+  return { ingestion_id: scope.ingestionId, hours: scope.hours };
+}
+
+async function getJson(path) {
+  const res = await fetch(`${API_BASE}${path}`);
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+export const fetchOverview = (scope) => getJson(`/api/overview${toQuery(scopeParams(scope))}`);
+export const fetchModel = (scope) => getJson(`/api/model${toQuery(scopeParams(scope))}`);
+export const fetchRules = (scope) => getJson(`/api/rules${toQuery(scopeParams(scope))}`);
+export const fetchIngestions = () => getJson("/api/ingestions");
+export const searchEvents = (params) => getJson(`/api/events${toQuery(params)}`);
+
 export async function trainModel() {
   const res = await fetch(`${API_BASE}/api/train`, { method: "POST" });
   if (!res.ok) {

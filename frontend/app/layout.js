@@ -1,7 +1,8 @@
 import "./globals.css";
+import "./console.css";
 
 export const metadata = {
-  title: "ARIS - Automated Registry and Incident Sifting",
+  title: "ARIS · Detection Ops Console",
   description: "SOC log triage platform with hybrid detection",
 };
 

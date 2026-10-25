@@ -41,6 +41,19 @@ def load_rules() -> list[dict]:
     return rules
 
 
+def describe_rule(rule: dict) -> dict:
+    """Summarise a rule's metadata (used by the dashboard API)."""
+    return {
+        "rule_id": rule.get("id", "unknown"),
+        "title": rule.get("title", "Untitled"),
+        "description": rule.get("description", ""),
+        "status": rule.get("status", "experimental"),
+        "severity": rule.get("level", "medium"),
+        "technique": _extract_attack_id(rule),
+        "tactic": _extract_tactic(rule),
+    }
+
+
 def run_rules(event: Event) -> list[Detection]:
     """Evaluate all loaded rules against a single event.
 

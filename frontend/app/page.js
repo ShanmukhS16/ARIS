@@ -1,132 +1,124 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import FileUpload from "../components/FileUpload";
-import Timeline from "../components/Timeline";
-import DetectionTable from "../components/DetectionTable";
-import NarrativePanel from "../components/NarrativePanel";
-import StatsBar from "../components/StatsBar";
-import { fetchEvents, fetchStats, trainModel } from "../lib/api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Sidebar, { findPage } from "../components/Sidebar";
+import Topbar from "../components/Topbar";
+import OverviewView from "../components/views/OverviewView";
+import LiveLogsView from "../components/views/LiveLogsView";
+import { DetectionsView, IncidentView, TimelineView } from "../components/views/EventViews";
+import RulesView from "../components/views/RulesView";
+import ModelView from "../components/views/ModelView";
+import IngestionView from "../components/views/IngestionView";
+import { healthCheck } from "../lib/api";
+import { fmtNum } from "../lib/format";
 
-const TABS = [
-  { id: "timeline", label: "Timeline" },
-  { id: "events", label: "Events" },
-  { id: "narrative", label: "Narrative" },
-];
+const DEFAULT_PAGE = "overview";
 
-export default function Dashboard() {
-  const [tab, setTab] = useState("timeline");
-  const [events, setEvents] = useState([]);
-  const [stats, setStats] = useState(null);
+export default function Console() {
+  const [page, setPage] = useState(DEFAULT_PAGE);
+  const [hours, setHours] = useState(null);
   const [ingestionId, setIngestionId] = useState(null);
-  const [filter, setFilter] = useState("all");
-  const [training, setTraining] = useState(false);
+  const [refreshMs, setRefreshMs] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [now, setNow] = useState(Date.now());
+  const [health, setHealth] = useState(null);
+  const [toasts, setToasts] = useState([]);
 
-  const loadData = useCallback(async (iid) => {
-    try {
-      const [evts, st] = await Promise.all([
-        fetchEvents({ ingestion_id: iid, detection_level: filter !== "all" ? filter : undefined }),
-        fetchStats(iid),
-      ]);
-      setEvents(evts);
-      setStats(st);
-    } catch (err) {
-      console.error("Failed to load data:", err);
-    }
-  }, [filter]);
+  // Keep the current page in the URL hash so refresh/back work
+  useEffect(() => {
+    const sync = () => {
+      const id = window.location.hash.slice(1);
+      setPage(findPage(id) ? id : DEFAULT_PAGE);
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
+
+  const navigate = useCallback((id) => {
+    window.location.hash = id;
+    setPage(id);
+  }, []);
+
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   useEffect(() => {
-    // Try loading existing data on mount
-    loadData(null);
-  }, [loadData]);
+    if (!refreshMs) return;
+    const t = setInterval(refresh, refreshMs);
+    return () => clearInterval(t);
+  }, [refreshMs, refresh]);
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    setLastUpdated(Date.now());
+    healthCheck().then(setHealth).catch(() => setHealth(null));
+  }, [refreshKey, hours, ingestionId]);
+
+  const notify = useCallback((message, kind = "info") => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts((ts) => [...ts, { id, message, kind }]);
+    setTimeout(() => setToasts((ts) => ts.filter((t) => t.id !== id)), 4500);
+  }, []);
 
   function handleIngested(result) {
-    setIngestionId(result.ingestion_id);
-    loadData(result.ingestion_id);
+    notify(
+      `Job ${result.ingestion_id} completed: ${fmtNum(result.events_parsed)} events, ` +
+      `${result.sigma_detections} Sigma hits, ${result.ml_anomalies} ML anomalies`,
+      "success"
+    );
+    refresh();
   }
 
-  async function handleTrain() {
-    setTraining(true);
-    try {
-      await trainModel();
-      // Reload to get updated ML scores
-      await loadData(ingestionId);
-    } catch (err) {
-      console.error("Training failed:", err);
-    } finally {
-      setTraining(false);
-    }
+  function handleInspect(id) {
+    setIngestionId(id);
+    navigate("overview");
   }
 
-  function handleFilterChange(newFilter) {
-    setFilter(newFilter);
-    loadData(ingestionId);
-  }
+  const scope = useMemo(() => ({ hours, ingestionId }), [hours, ingestionId]);
+  const viewProps = { scope, refreshKey, onNavigate: navigate, onRefresh: refresh, notify };
 
   return (
-    <main className="dashboard">
-      <header className="dashboard-header">
-        <div className="header-left">
-          <h1 className="logo">
-            <span className="logo-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-            </span>
-            ARIS
-          </h1>
-          <span className="subtitle">Automated Registry and Incident Sifting</span>
-        </div>
-        <div className="header-right">
-          <button
-            onClick={handleTrain}
-            disabled={training || !events.length}
-            className="btn btn-secondary"
-          >
-            {training ? "Training..." : "Train ML"}
-          </button>
-        </div>
-      </header>
+    <div className="app-shell">
+      <Sidebar page={page} onNavigate={navigate} health={health} />
 
-      <FileUpload onIngested={handleIngested} />
+      <div className="app-main">
+        <Topbar
+          pageInfo={findPage(page)}
+          hours={hours}
+          onHours={setHours}
+          refreshMs={refreshMs}
+          onRefreshMs={setRefreshMs}
+          onRefresh={refresh}
+          lastUpdated={lastUpdated}
+          now={now}
+          health={health}
+          ingestionId={ingestionId}
+          onClearIngestion={() => setIngestionId(null)}
+        />
 
-      {stats && <StatsBar stats={stats} />}
+        <main className="app-content">
+          {page === "overview" && <OverviewView {...viewProps} />}
+          {page === "logs" && <LiveLogsView {...viewProps} />}
+          {page === "timeline" && <TimelineView {...viewProps} />}
+          {page === "detections" && <DetectionsView {...viewProps} />}
+          {page === "rules" && <RulesView {...viewProps} />}
+          {page === "model" && <ModelView {...viewProps} />}
+          {page === "incident" && <IncidentView {...viewProps} />}
+          {page === "ingestion" && (
+            <IngestionView {...viewProps} onIngested={handleIngested} onInspect={handleInspect} />
+          )}
+        </main>
+      </div>
 
-      {events.length > 0 && (
-        <>
-          {/* Tab bar */}
-          <div className="tab-bar">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                className={`tab ${tab === t.id ? "tab-active" : ""}`}
-                onClick={() => setTab(t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
-
-            {/* Detection filter */}
-            <div className="filter-group">
-              {["all", "any", "sigma", "ml", "both"].map((f) => (
-                <button
-                  key={f}
-                  className={`filter-btn ${filter === f ? "filter-active" : ""}`}
-                  onClick={() => handleFilterChange(f)}
-                >
-                  {f === "any" ? "Detected" : f.charAt(0).toUpperCase() + f.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tab content */}
-          <div className="tab-content">
-            {tab === "timeline" && <Timeline events={events} />}
-            {tab === "events" && <DetectionTable events={events} />}
-            {tab === "narrative" && <NarrativePanel ingestionId={ingestionId} />}
-          </div>
-        </>
-      )}
-    </main>
+      <div className="toast-stack">
+        {toasts.map((t) => (
+          <div key={t.id} className={`toast toast-${t.kind}`}>{t.message}</div>
+        ))}
+      </div>
+    </div>
   );
 }

@@ -68,6 +68,15 @@ SENSITIVE_REG = [
 
 C2_PORTS = {"443", "8080", "8443", "4444", "1234", "9999"}
 
+# Names for the columns produced by _event_to_features, in order.
+FEATURE_NAMES = [
+    "cmd_length", "cmd_entropy", "suspicious_tokens", "encoded_payload",
+    "suspicious_parent", "powershell", "reg_write_sensitive", "reg_query_sensitive",
+    "c2_port", "rdp_internal", "auth_failure", "shadow_access", "source_type",
+    "process_rarity", "user_process_rarity", "credential_tools", "transfer_tools",
+    "hour_sin", "hour_cos",
+]
+
 
 # -----------------------------------------------------------------------
 # Feature extraction
@@ -340,6 +349,34 @@ def score_event(event) -> Optional[float]:
     raw = _model.decision_function(X)[0]
 
     return _raw_to_score(raw)
+
+
+def model_info() -> dict:
+    """Describe the currently loaded model for the dashboard."""
+    if _model is None:
+        load_model()
+    if _model is None:
+        return {"loaded": False, "threshold": settings.ml_anomaly_threshold}
+
+    from datetime import datetime
+
+    stats = _score_stats or {}
+    return {
+        "loaded": True,
+        "algorithm": type(_model).__name__,
+        "n_estimators": _model.n_estimators,
+        "contamination": _model.contamination,
+        "max_features": _model.max_features,
+        "n_features": int(getattr(_scaler, "n_features_in_", len(FEATURE_NAMES))),
+        "feature_names": FEATURE_NAMES,
+        "trained_at": datetime.fromtimestamp(_MODEL_PATH.stat().st_mtime).isoformat(),
+        "known_processes": len(stats.get("proc_counts", {})),
+        "raw_score_stats": {
+            k: stats[k] for k in ("min", "p01", "p05", "p10", "p50", "p90", "p95", "p99", "max", "mean", "std")
+            if k in stats
+        },
+        "threshold": settings.ml_anomaly_threshold,
+    }
 
 
 def is_anomaly(score: Optional[float], threshold: Optional[float] = None) -> bool:

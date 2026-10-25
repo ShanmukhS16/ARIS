@@ -1,4 +1,5 @@
 "use client";
+import { fmtTs } from "../lib/format";
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
 
@@ -31,8 +32,8 @@ export default function DetectionTable({ events }) {
         </thead>
         <tbody>
           {sorted.map((ev, i) => (
-            <tr key={i} className={`row-${ev.detection_level}`}>
-              <td className="cell-mono">{new Date(ev.timestamp).toLocaleTimeString()}</td>
+            <tr key={ev.id ?? i} className={`row-${ev.detection_level}`}>
+              <td className="cell-mono">{fmtTs(ev.timestamp)}</td>
               <td>{ev.host}</td>
               <td>{ev.user || "-"}</td>
               <td className="cell-process" title={ev.process}>
