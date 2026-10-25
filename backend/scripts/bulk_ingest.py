@@ -35,6 +35,7 @@ from datetime import datetime
 from pathlib import Path
 
 from sqlalchemy import select, update, func
+from sqlalchemy.orm import selectinload
 
 from app.database import init_db, async_session
 from app.models import Event, Detection, new_ingestion_id
@@ -162,7 +163,7 @@ async def train_ml():
     async with async_session() as session:
         result = await session.execute(
             select(Event).options(
-                __import__("sqlalchemy.orm", fromlist=["selectinload"]).selectinload(Event.detections)
+                selectinload(Event.detections)
             ).order_by(Event.timestamp)
         )
         events = result.scalars().all()
@@ -173,7 +174,7 @@ async def train_ml():
 
     print(f"  Training on {len(events):,} events...")
     model = train_model(events)
-    print(f"  Model trained (estimators={model.n_estimators}, features=256)")
+    print(f"  Model trained (estimators={model.n_estimators}, features=19)")
 
     # Backfill scores
     print("  Backfilling scores...")

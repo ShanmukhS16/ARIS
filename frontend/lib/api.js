@@ -27,7 +27,8 @@ export async function fetchEvents(params = {}) {
   if (params.limit) qs.set("limit", String(params.limit));
   if (params.offset) qs.set("offset", String(params.offset));
   const res = await fetch(`${API_BASE}/api/events?${qs}`);
-  return res.json();
+  const data = await res.json();
+  return data.items ?? data;
 }
 
 export async function fetchDetections(params = {}) {
@@ -35,7 +36,8 @@ export async function fetchDetections(params = {}) {
   if (params.ingestion_id) qs.set("ingestion_id", params.ingestion_id);
   if (params.severity) qs.set("severity", params.severity);
   const res = await fetch(`${API_BASE}/api/detections?${qs}`);
-  return res.json();
+  const data = await res.json();
+  return data.items ?? data;
 }
 
 export async function fetchStats(ingestionId) {
@@ -79,7 +81,9 @@ export const fetchOverview = (scope) => getJson(`/api/overview${toQuery(scopePar
 export const fetchModel = (scope) => getJson(`/api/model${toQuery(scopeParams(scope))}`);
 export const fetchRules = (scope) => getJson(`/api/rules${toQuery(scopeParams(scope))}`);
 export const fetchIngestions = () => getJson("/api/ingestions");
-export const searchEvents = (params) => getJson(`/api/events${toQuery(params)}`);
+// /api/events returns { items, total, limit, offset }
+export const searchEvents = (params) =>
+  getJson(`/api/events${toQuery(params)}`).then((data) => data.items ?? data);
 
 export async function trainModel() {
   const res = await fetch(`${API_BASE}/api/train`, { method: "POST" });

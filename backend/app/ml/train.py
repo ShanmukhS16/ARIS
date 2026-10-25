@@ -32,7 +32,7 @@ async def main():
     total = len(events)
     print(f"Training IsolationForest on {total:,} events...")
     model = train_model(events)
-    print(f"Model trained. Estimators: {model.n_estimators}, Features: 256")
+    print(f"Model trained. Estimators: {model.n_estimators}, Features: 19")
 
     print("Backfilling anomaly scores...")
     scored = 0
