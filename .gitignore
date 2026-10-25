@@ -9,3 +9,7 @@ backend/aris.db
 .venv/
 __pycache__/
 *.pyc
+
+# SQLite WAL side files
+backend/aris.db-wal
+backend/aris.db-shm
