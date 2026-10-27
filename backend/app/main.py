@@ -14,6 +14,7 @@ Dashboard endpoints:
   GET  /api/model           - Loaded model metadata and anomaly score histogram
   GET  /api/rules           - Sigma rules with hit counts
   GET  /api/ingestions      - Ingestion job history
+  GET  /api/evaluation      - Offline benchmark results (scripts/evaluate_benchmark.py)
 
 Time ranges (`hours`) are relative to the newest event in scope, not
 wall-clock time, because ingested datasets are usually historical.
@@ -63,7 +64,6 @@ app = FastAPI(
     version="0.5.0",
     lifespan=lifespan,
 )
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -620,6 +620,20 @@ async def ingestions(limit: int = Query(default=50, le=500)):
         }
         for iid, n, det, first, last, src, hosts in rows
     ]
+
+
+_BENCHMARK_PATH = settings.base_dir / "app" / "evaluation" / "benchmark.json"
+
+
+@app.get("/api/evaluation")
+async def evaluation():
+    """Offline benchmark written by scripts.evaluate_benchmark (not live data)."""
+    if not _BENCHMARK_PATH.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="No benchmark results. Run: python -m scripts.evaluate_benchmark --work-dir <tmp>",
+        )
+    return json.loads(_BENCHMARK_PATH.read_text(encoding="utf-8"))
 
 
 # ---- Narrative ----

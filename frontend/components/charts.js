@@ -249,3 +249,116 @@ export function BarList({ items, emptyText = "No data" }) {
     </div>
   );
 }
+
+// ---- Multi-series line chart over a numeric x axis ----
+// series: [{ key, label, color, points: [[x, y], ...], dash }]; y is a 0..1 rate.
+
+function nearestY(points, xv) {
+  let lo = 0, hi = points.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (points[mid][0] < xv) lo = mid; else hi = mid;
+  }
+  if (!points.length) return null;
+  return Math.abs(points[lo][0] - xv) <= Math.abs(points[hi][0] - xv) ? points[lo] : points[hi];
+}
+
+export function LineChart({
+  series,
+  xDomain,
+  xLog = false,
+  height = 240,
+  xFormat = (v) => v.toFixed(2),
+  yFormat = (v) => `${(v * 100).toFixed(0)}%`,
+  xTitle,
+  yTitle,
+  markers = [], // [{ x, label }]
+  dots = [],    // [{ x, y, label, color }]
+}) {
+  const [ref, width] = useWidth();
+  const [hoverX, setHoverX] = useState(null);
+
+  const pad = { top: 12, right: 16, bottom: 34, left: 44 };
+  const w = Math.max(width - pad.left - pad.right, 10);
+  const h = height - pad.top - pad.bottom;
+  const [x0, x1] = xDomain;
+  const tx = (v) => (xLog ? Math.log10(Math.max(v, x0)) : v);
+  const fx = (v) => pad.left + ((tx(v) - tx(x0)) / (tx(x1) - tx(x0))) * w;
+  const fy = (v) => pad.top + h - v * h;
+  const invX = (px) => {
+    const t = tx(x0) + ((px - pad.left) / w) * (tx(x1) - tx(x0));
+    return xLog ? Math.pow(10, t) : t;
+  };
+
+  const xTicks = xLog
+    ? Array.from({ length: Math.round(Math.log10(x1 / x0)) + 1 }, (_, i) => x0 * Math.pow(10, i))
+    : [0, 0.25, 0.5, 0.75, 1].map((f) => x0 + f * (x1 - x0));
+
+  function onMove(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    setHoverX(px >= pad.left && px <= pad.left + w ? invX(px) : null);
+  }
+
+  return (
+    <div ref={ref} className="chart" style={{ height }}>
+      {width > 0 && (
+        <svg width={width} height={height} onMouseMove={onMove} onMouseLeave={() => setHoverX(null)}>
+          {[0, 0.25, 0.5, 0.75, 1].map((f) => (
+            <g key={f}>
+              <line x1={pad.left} x2={pad.left + w} y1={fy(f)} y2={fy(f)} className="chart-grid" />
+              <text x={pad.left - 6} y={fy(f) + 3} textAnchor="end" className="chart-axis">{yFormat(f)}</text>
+            </g>
+          ))}
+          {xTicks.map((v) => (
+            <text key={v} x={fx(v)} y={pad.top + h + 14} textAnchor="middle" className="chart-axis">{xFormat(v)}</text>
+          ))}
+          {xTitle && (
+            <text x={pad.left + w / 2} y={height - 4} textAnchor="middle" className="chart-axis">{xTitle}</text>
+          )}
+          {yTitle && (
+            <text transform={`translate(10 ${pad.top + h / 2}) rotate(-90)`} textAnchor="middle" className="chart-axis">{yTitle}</text>
+          )}
+          {markers.map((m) => (
+            <g key={m.label}>
+              <line x1={fx(m.x)} x2={fx(m.x)} y1={pad.top} y2={pad.top + h} className="chart-crosshair" />
+              <text x={fx(m.x) + 4} y={pad.top + 10} className="chart-axis">{m.label}</text>
+            </g>
+          ))}
+          {series.map((s) => (
+            <path
+              key={s.key}
+              d={s.points.map(([x, y], i) => `${i ? "L" : "M"}${fx(x)},${fy(y)}`).join(" ")}
+              fill="none" stroke={s.color} strokeWidth="2" strokeDasharray={s.dash ? "5 4" : undefined}
+              strokeLinejoin="round"
+            />
+          ))}
+          {dots.map((d) => (
+            <g key={d.label}>
+              <circle cx={fx(d.x)} cy={fy(d.y)} r="5" fill={d.color} stroke="var(--bg-card)" strokeWidth="2" />
+              <text x={fx(d.x) + 8} y={fy(d.y) - 6} className="chart-axis">{d.label}</text>
+            </g>
+          ))}
+          {hoverX !== null && (
+            <line x1={fx(hoverX)} x2={fx(hoverX)} y1={pad.top} y2={pad.top + h} className="chart-crosshair" />
+          )}
+        </svg>
+      )}
+      {hoverX !== null && (
+        <div className="chart-tooltip" style={{ left: Math.min(fx(hoverX) + 12, Math.max(width - 200, 0)), top: pad.top }}>
+          <div className="chart-tooltip-title">{xTitle || "x"} {xFormat(hoverX)}</div>
+          {series.map((s) => {
+            const p = nearestY(s.points, hoverX);
+            return p ? (
+              <div key={s.key} className="chart-tooltip-row">
+                <span className="legend-line" style={{ background: s.color }} />
+                <span>{s.label}</span>
+                <span className="chart-tooltip-val">{yFormat(p[1])}</span>
+              </div>
+            ) : null;
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

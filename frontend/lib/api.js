@@ -81,6 +81,7 @@ export const fetchOverview = (scope) => getJson(`/api/overview${toQuery(scopePar
 export const fetchModel = (scope) => getJson(`/api/model${toQuery(scopeParams(scope))}`);
 export const fetchRules = (scope) => getJson(`/api/rules${toQuery(scopeParams(scope))}`);
 export const fetchIngestions = () => getJson("/api/ingestions");
+export const fetchEvaluation = () => getJson("/api/evaluation");
 // /api/events returns { items, total, limit, offset }
 export const searchEvents = (params) =>
   getJson(`/api/events${toQuery(params)}`).then((data) => data.items ?? data);

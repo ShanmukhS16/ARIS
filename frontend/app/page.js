@@ -7,6 +7,7 @@ import LiveLogsView from "../components/views/LiveLogsView";
 import { DetectionsView, IncidentView, TimelineView } from "../components/views/EventViews";
 import RulesView from "../components/views/RulesView";
 import ModelView from "../components/views/ModelView";
+import EvaluationView from "../components/views/EvaluationView";
 import IngestionView from "../components/views/IngestionView";
 import { healthCheck } from "../lib/api";
 import { fmtNum } from "../lib/format";
@@ -15,7 +16,7 @@ const DEFAULT_PAGE = "overview";
 
 export default function Console() {
   const [page, setPage] = useState(DEFAULT_PAGE);
-  const [hours, setHours] = useState(null);
+  const [hours, setHours] = useState(24);
   const [ingestionId, setIngestionId] = useState(null);
   const [refreshMs, setRefreshMs] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -107,6 +108,7 @@ export default function Console() {
           {page === "detections" && <DetectionsView {...viewProps} />}
           {page === "rules" && <RulesView {...viewProps} />}
           {page === "model" && <ModelView {...viewProps} />}
+          {page === "evaluation" && <EvaluationView {...viewProps} />}
           {page === "incident" && <IncidentView {...viewProps} />}
           {page === "ingestion" && (
             <IngestionView {...viewProps} onIngested={handleIngested} onInspect={handleInspect} />

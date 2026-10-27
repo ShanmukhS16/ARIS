@@ -11,11 +11,13 @@ attacker activity from normal endpoint telemetry:
   - Network destination unusualness
   - Registry target sensitivity
 
-Scoring uses percentile normalization: the raw IsolationForest
-decision_function is mapped to [0, 1] based on where each event
-falls in the score distribution. This means ~5% of events will
-always score above 0.5 by construction. The threshold should be
-tuned against ground truth labels.
+Scoring standardises the raw IsolationForest decision_function f(x)
+with the training mean and std, then applies a sigmoid with the sign
+flipped (lower f = more anomalous): s = 1 / (1 + exp((f - mu) / sigma)).
+Any event with f below the training mean scores above 0.5, so the share
+of events above a threshold depends on the skew of f; it is not fixed.
+contamination shifts f by a constant that cancels in (f - mu), so it does
+not affect s. The threshold should be tuned against ground truth labels.
 """
 
 from __future__ import annotations

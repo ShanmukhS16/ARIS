@@ -11,6 +11,7 @@ export const NAV = [
     { id: "detections", label: "Detections", icon: "alert" },
     { id: "rules", label: "Sigma Rules", icon: "rules" },
     { id: "model", label: "ML Model", icon: "cpu" },
+    { id: "evaluation", label: "Evaluation", icon: "chart" },
   ]},
   { group: "Respond", items: [
     { id: "incident", label: "Incident Report", icon: "report" },
